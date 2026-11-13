@@ -8,6 +8,7 @@ object ItemArmory {
         // ==========================================
         DiabloItem(
             name = "The Grandfather",
+            itemId = 1, // UITEM_GRANDFATHER
             baseType = "Great Sword",
             quality = ItemQuality.UNIQUE,
             minDamage = 13,
@@ -25,19 +26,47 @@ object ItemArmory {
             gridWidth = 1,
             gridHeight = 3
         ),
+        // ... Additions from official DevilutionX IDs ...
         DiabloItem(
-            name = "King's Sword of Haste",
+            name = "Arkaine's Valor",
+            itemId = 2, // UITEM_VALOR
+            baseType = "Splint Mail",
+            quality = ItemQuality.UNIQUE,
+            armorClass = 25,
+            hitPointsBonus = 10,
+            strengthReq = 30,
+            extraDescription = "Fastest hit recovery, reduces damage taken by 3",
+            modOrigin = GameMod.VANILLA_DIABLO,
+            recommendedClasses = listOf(HeroClass.WARRIOR, HeroClass.BARD),
+            defaultSlot = EquipSlot.TORSO,
+            gridWidth = 2,
+            gridHeight = 3
+        ),
+        DiabloItem(
+            name = "Lightsabre",
+            itemId = 3, // UITEM_LIGHTSABRE
+            baseType = "Bastard Sword",
+            quality = ItemQuality.UNIQUE,
+            minDamage = 6,
+            maxDamage = 14,
+            damageBonus = 150,
+            lightningResist = 50,
+            extraDescription = "Pure crackling energy; absorbs lightning",
+            modOrigin = GameMod.VANILLA_DIABLO,
+            recommendedClasses = listOf(HeroClass.WARRIOR, HeroClass.BARD, HeroClass.ROGUE),
+            defaultSlot = EquipSlot.LEFT_HAND,
+            gridWidth = 1,
+            gridHeight = 3
+        ),
+        // Example of a magic item base (Magic prefix/suffix need to be dynamically handled, but adding base here)
+        DiabloItem(
+            name = "King's Bastard Sword",
+            itemId = 500, // Generic Magic Bastard Sword ID
             baseType = "Bastard Sword",
             quality = ItemQuality.MAGIC,
             prefix = "King's",
-            suffix = "of Haste",
-            minDamage = 8,
-            maxDamage = 16,
             damageBonus = 175,
             toHitBonus = 100,
-            durability = 60,
-            maxDurability = 60,
-            extraDescription = "Fastest attack speed in Diablo 1, supreme DPS choice for Melee & Bard",
             modOrigin = GameMod.VANILLA_DIABLO,
             recommendedClasses = listOf(HeroClass.WARRIOR, HeroClass.BARD, HeroClass.BARBARIAN),
             defaultSlot = EquipSlot.LEFT_HAND,
@@ -45,95 +74,21 @@ object ItemArmory {
             gridHeight = 3
         ),
         DiabloItem(
-            name = "Doombringer",
-            baseType = "Bastard Sword",
-            quality = ItemQuality.UNIQUE,
-            minDamage = 6,
-            maxDamage = 15,
-            damageBonus = 250,
-            hitPointsBonus = 25,
-            armorClass = 0,
-            isIndestructible = true,
-            extraDescription = "Heavy shadow damage with +250% damage bonus",
+            name = "Obsidian Ring of the Zodiac",
+            itemId = 600, // Generic Magic Ring ID
+            baseType = "Ring",
+            quality = ItemQuality.MAGIC,
+            prefix = "Obsidian",
+            suffix = "of the Zodiac",
+            allAttributesBonus = 20,
+            fireResist = 40,
+            lightningResist = 40,
+            magicResist = 40,
             modOrigin = GameMod.VANILLA_DIABLO,
-            recommendedClasses = listOf(HeroClass.WARRIOR, HeroClass.BARBARIAN),
-            defaultSlot = EquipSlot.LEFT_HAND,
+            recommendedClasses = HeroClass.entries,
+            defaultSlot = EquipSlot.LEFT_RING,
             gridWidth = 1,
-            gridHeight = 3
-        ),
-        DiabloItem(
-            name = "Griswold's Edge",
-            baseType = "Broad Sword",
-            quality = ItemQuality.UNIQUE,
-            minDamage = 4,
-            maxDamage = 12,
-            damageBonus = 25,
-            toHitBonus = 25,
-            manaBonus = 20,
-            extraDescription = "Crafted by Griswold the blacksmith; fast attack speed with 1-10 fire damage",
-            modOrigin = GameMod.VANILLA_DIABLO,
-            recommendedClasses = listOf(HeroClass.WARRIOR, HeroClass.BARD),
-            defaultSlot = EquipSlot.LEFT_HAND,
-            gridWidth = 1,
-            gridHeight = 3
-        ),
-        DiabloItem(
-            name = "Lightsabre",
-            baseType = "Phase Blade / Sabre",
-            quality = ItemQuality.UNIQUE,
-            minDamage = 6,
-            maxDamage = 14,
-            damageBonus = 150,
-            lightningResist = 50,
-            extraDescription = "Pure crackling energy; absorbs lightning and ignores target defense",
-            modOrigin = GameMod.VANILLA_DIABLO,
-            recommendedClasses = listOf(HeroClass.WARRIOR, HeroClass.BARD, HeroClass.ROGUE),
-            defaultSlot = EquipSlot.LEFT_HAND,
-            gridWidth = 1,
-            gridHeight = 3
-        ),
-        DiabloItem(
-            name = "The Executioner",
-            baseType = "Broad Sword",
-            quality = ItemQuality.UNIQUE,
-            minDamage = 8,
-            maxDamage = 18,
-            damageBonus = 150,
-            hitPointsBonus = -10,
-            extraDescription = "Sacrifices hit points for brutal decapitating blows",
-            modOrigin = GameMod.VANILLA_DIABLO,
-            recommendedClasses = listOf(HeroClass.WARRIOR, HeroClass.BARBARIAN),
-            defaultSlot = EquipSlot.LEFT_HAND,
-            gridWidth = 1,
-            gridHeight = 3
-        ),
-        DiabloItem(
-            name = "The Shadowhawk",
-            baseType = "Broad Sword",
-            quality = ItemQuality.UNIQUE,
-            minDamage = 5,
-            maxDamage = 13,
-            allAttributesBonus = 5,
-            extraDescription = "Swift airborne strikes with all-around attribute boosts",
-            modOrigin = GameMod.VANILLA_DIABLO,
-            recommendedClasses = listOf(HeroClass.WARRIOR, HeroClass.BARD),
-            defaultSlot = EquipSlot.LEFT_HAND,
-            gridWidth = 1,
-            gridHeight = 3
-        ),
-        DiabloItem(
-            name = "Black Razor",
-            baseType = "Dagger",
-            quality = ItemQuality.UNIQUE,
-            minDamage = 2,
-            maxDamage = 6,
-            damageBonus = 150,
-            extraDescription = "Vicious thrust weapon with extreme critical velocity",
-            modOrigin = GameMod.VANILLA_DIABLO,
-            recommendedClasses = listOf(HeroClass.ROGUE, HeroClass.BARD),
-            defaultSlot = EquipSlot.LEFT_HAND,
-            gridWidth = 1,
-            gridHeight = 2
+            gridHeight = 1
         ),
 
         // ==========================================

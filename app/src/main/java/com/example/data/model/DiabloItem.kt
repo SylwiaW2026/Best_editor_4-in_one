@@ -20,6 +20,7 @@ enum class EquipSlot(val displayName: String, val shortLabel: String) {
 
 data class DiabloItem(
     val id: String = UUID.randomUUID().toString(),
+    val itemId: Int = 0, // Official DevilutionX Item ID
     val name: String,
     val baseType: String,
     val quality: ItemQuality = ItemQuality.NORMAL,
@@ -68,10 +69,10 @@ data class DiabloItem(
         get() = defaultSlot ?: when {
             baseType.contains("Helm", true) || baseType.contains("Cap", true) || baseType.contains("Crown", true) || baseType.contains("Hood", true) -> EquipSlot.HEAD
             baseType.contains("Mail", true) || baseType.contains("Plate", true) || baseType.contains("Armor", true) || baseType.contains("Robe", true) || baseType.contains("Cloak", true) -> EquipSlot.TORSO
-            baseType.contains("Sword", true) || baseType.contains("Bow", true) || baseType.contains("Staff", true) || baseType.contains("Axe", true) || baseType.contains("Mace", true) || baseType.contains("Hammer", true) || baseType.contains("Cudgel", true) || baseType.contains("Dagger", true) -> EquipSlot.LEFT_HAND
-            baseType.contains("Shield", true) || baseType.contains("Bulwark", true) -> EquipSlot.RIGHT_HAND
+            baseType.contains("Shield", true) || baseType.contains("Buckler", true) -> EquipSlot.RIGHT_HAND
             baseType.contains("Amulet", true) || baseType.contains("Phial", true) -> EquipSlot.NECK
             baseType.contains("Ring", true) -> EquipSlot.LEFT_RING
-            else -> null
+            // Everything else is treated as a weapon (Left Hand)
+            else -> EquipSlot.LEFT_HAND
         }
 }

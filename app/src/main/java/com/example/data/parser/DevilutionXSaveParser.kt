@@ -110,9 +110,19 @@ object DevilutionXSaveParser {
         val maxMana = if (rawMaxMana > 1000) rawMaxMana / 64 else rawMaxMana.coerceAtLeast(0)
         val baseMana = if (rawBaseMana > 1000) rawBaseMana / 64 else rawBaseMana.coerceAtLeast(0)
 
-        // Spell levels (37 spells in Diablo 1 / Hellfire)
+        // Spell levels (64-element array in DevilutionX)
         val spellLevels = mutableMapOf<String, Int>()
-        if (buf.remaining() >= DiabloSpellsCatalog.ALL_SPELLS.size) {
+        val allSpellBytes = ByteArray(64)
+        if (buf.remaining() >= 64) {
+            buf.get(allSpellBytes)
+            for (spell in DiabloSpellsCatalog.ALL_SPELLS) {
+                val lvl = allSpellBytes[spell.binaryIndex].toInt() and 0xFF
+                if (lvl in 1..15) {
+                    spellLevels[spell.id] = lvl
+                }
+            }
+        } else {
+            // Fallback for older save format or malformed data
             for (spell in DiabloSpellsCatalog.ALL_SPELLS) {
                 if (buf.hasRemaining()) {
                     val lvl = buf.get().toInt() and 0xFF
@@ -232,10 +242,12 @@ object DevilutionXSaveParser {
         buf.putInt(hero.baseMana * 64)
 
         // Spells
+        val spellBytes = ByteArray(64)
         for (spell in DiabloSpellsCatalog.ALL_SPELLS) {
             val lvl = hero.spellLevels[spell.id] ?: 0
-            buf.put(lvl.coerceIn(0, 15).toByte())
+            spellBytes[spell.binaryIndex] = lvl.coerceIn(0, 15).toByte()
         }
+        buf.put(spellBytes)
 
         // DEVX metadata block at offset 512 (0x200)
         buf.position(512)

@@ -113,33 +113,37 @@ data class HeroCharacter(
 
         fun createGodly(heroClass: HeroClass, name: String = "Archon"): HeroCharacter {
             val allSpellsMax = DiabloSpellsCatalog.ALL_SPELLS.associate { it.id to 15 }
-            val godlyItems = when (heroClass) {
-                HeroClass.WARRIOR -> mapOf(
-                    EquipSlot.HEAD to ItemArmory.LEGENDARY_CATALOG.first { it.name.contains("Royal Crest") },
-                    EquipSlot.TORSO to ItemArmory.LEGENDARY_CATALOG.first { it.name.contains("Godly Plate") },
-                    EquipSlot.LEFT_HAND to ItemArmory.LEGENDARY_CATALOG.first { it.name.contains("Grandfather") },
-                    EquipSlot.RIGHT_HAND to ItemArmory.LEGENDARY_CATALOG.first { it.name.contains("Stormshield") },
-                    EquipSlot.NECK to ItemArmory.LEGENDARY_CATALOG.first { it.name.contains("Obsidian Amulet") },
-                    EquipSlot.LEFT_RING to ItemArmory.LEGENDARY_CATALOG.first { it.name.contains("Obsidian Ring") },
-                    EquipSlot.RIGHT_RING to ItemArmory.LEGENDARY_CATALOG.first { it.name.contains("Dragon's Ring") }
-                )
-                HeroClass.ROGUE -> mapOf(
-                    EquipSlot.HEAD to ItemArmory.LEGENDARY_CATALOG.first { it.name.contains("Veil of Steel") },
-                    EquipSlot.TORSO to ItemArmory.LEGENDARY_CATALOG.first { it.name.contains("Demonspike") },
-                    EquipSlot.LEFT_HAND to ItemArmory.LEGENDARY_CATALOG.first { it.name.contains("Windforce") },
-                    EquipSlot.NECK to ItemArmory.LEGENDARY_CATALOG.first { it.name.contains("Obsidian Amulet") },
-                    EquipSlot.LEFT_RING to ItemArmory.LEGENDARY_CATALOG.first { it.name.contains("Obsidian Ring") },
-                    EquipSlot.RIGHT_RING to ItemArmory.LEGENDARY_CATALOG.first { it.name.contains("Obsidian Ring") }
-                )
-                HeroClass.SORCERER -> mapOf(
-                    EquipSlot.HEAD to ItemArmory.LEGENDARY_CATALOG.first { it.name.contains("Thinking Cap") },
-                    EquipSlot.TORSO to ItemArmory.LEGENDARY_CATALOG.first { it.name.contains("Naj's Light Plate") },
-                    EquipSlot.LEFT_HAND to ItemArmory.LEGENDARY_CATALOG.first { it.name.contains("Arch-Angel's") },
-                    EquipSlot.NECK to ItemArmory.LEGENDARY_CATALOG.first { it.name.contains("Obsidian Amulet") },
-                    EquipSlot.LEFT_RING to ItemArmory.LEGENDARY_CATALOG.first { it.name.contains("Dragon's Ring") },
-                    EquipSlot.RIGHT_RING to ItemArmory.LEGENDARY_CATALOG.first { it.name.contains("Obsidian Ring") }
-                )
-                else -> emptyMap()
+            fun catalogItem(query: String): DiabloItem? =
+                ItemArmory.LEGENDARY_CATALOG.firstOrNull { it.name.contains(query, ignoreCase = true) }
+
+            val godlyItems = mutableMapOf<EquipSlot, DiabloItem>()
+            when (heroClass) {
+                HeroClass.WARRIOR -> {
+                    catalogItem("Royal Crest")?.let { godlyItems[EquipSlot.HEAD] = it }
+                    catalogItem("Godly Plate")?.let { godlyItems[EquipSlot.TORSO] = it }
+                    catalogItem("Grandfather")?.let { godlyItems[EquipSlot.LEFT_HAND] = it }
+                    catalogItem("Stormshield")?.let { godlyItems[EquipSlot.RIGHT_HAND] = it }
+                    catalogItem("Obsidian Amulet")?.let { godlyItems[EquipSlot.NECK] = it }
+                    catalogItem("Obsidian Ring")?.let { godlyItems[EquipSlot.LEFT_RING] = it }
+                    catalogItem("Dragon's Ring")?.let { godlyItems[EquipSlot.RIGHT_RING] = it }
+                }
+                HeroClass.ROGUE -> {
+                    catalogItem("Veil of Steel")?.let { godlyItems[EquipSlot.HEAD] = it }
+                    catalogItem("Demonspike")?.let { godlyItems[EquipSlot.TORSO] = it }
+                    catalogItem("Windforce")?.let { godlyItems[EquipSlot.LEFT_HAND] = it }
+                    catalogItem("Obsidian Amulet")?.let { godlyItems[EquipSlot.NECK] = it }
+                    catalogItem("Obsidian Ring")?.let { godlyItems[EquipSlot.LEFT_RING] = it }
+                    catalogItem("Obsidian Ring")?.let { godlyItems[EquipSlot.RIGHT_RING] = it }
+                }
+                HeroClass.SORCERER -> {
+                    catalogItem("Thinking Cap")?.let { godlyItems[EquipSlot.HEAD] = it }
+                    catalogItem("Naj's Light Plate")?.let { godlyItems[EquipSlot.TORSO] = it }
+                    catalogItem("Arch-Angel's")?.let { godlyItems[EquipSlot.LEFT_HAND] = it }
+                    catalogItem("Obsidian Amulet")?.let { godlyItems[EquipSlot.NECK] = it }
+                    catalogItem("Dragon's Ring")?.let { godlyItems[EquipSlot.LEFT_RING] = it }
+                    catalogItem("Obsidian Ring")?.let { godlyItems[EquipSlot.RIGHT_RING] = it }
+                }
+                else -> {}
             }
 
             return HeroCharacter(
@@ -168,10 +172,10 @@ data class HeroCharacter(
                 manaShieldActive = true,
                 spellLevels = allSpellsMax,
                 equipment = godlyItems,
-                inventory = listOf(
-                    ItemArmory.LEGENDARY_CATALOG.first { it.name.contains("King's Sword") },
-                    ItemArmory.LEGENDARY_CATALOG.first { it.name.contains("Naj's Puzzler") },
-                    ItemArmory.LEGENDARY_CATALOG.first { it.name.contains("Full Rejuvenation") }
+                inventory = listOfNotNull(
+                    catalogItem("King's"),
+                    catalogItem("Naj's Puzzler"),
+                    catalogItem("Full Rejuvenation")
                 ),
                 questsCompleted = 16
             )

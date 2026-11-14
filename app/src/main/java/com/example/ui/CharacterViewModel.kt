@@ -467,7 +467,7 @@ class CharacterViewModel : ViewModel() {
             null
         }
     }
-    private fun parseNativePlayerPack(raw: ByteArray): HeroCharacter {
+    internal fun parseNativePlayerPack(raw: ByteArray): HeroCharacter {
         val buffer = ByteBuffer.wrap(raw).order(ByteOrder.LITTLE_ENDIAN)
         
         // Keep in sync with sizeof(PlayerPack) in native pack.h.
@@ -521,14 +521,8 @@ class CharacterViewModel : ViewModel() {
             val iSeed = buffer.getInt(offset)
             if (iSeed == 0) return null // Empty slot
             val idx = buffer.getShort(offset + 6).toInt() and 0xFFFF
-            
-            return ItemArmory.FULL_ITEM_LIBRARY.getOrNull(idx % ItemArmory.FULL_ITEM_LIBRARY.size) ?: 
-                DiabloItem(
-                    name = "Unknown Item ($idx)",
-                    baseType = "Unknown",
-                    durability = buffer.get(offset + 9).toInt() and 0xFF,
-                    maxDurability = buffer.get(offset + 10).toInt() and 0xFF
-                )
+
+            return ItemArmory.FULL_ITEM_LIBRARY.getOrNull(idx)
         }
         
         val equipment = mutableMapOf<EquipSlot, DiabloItem>()

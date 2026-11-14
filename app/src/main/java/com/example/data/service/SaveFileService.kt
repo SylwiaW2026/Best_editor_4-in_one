@@ -4,6 +4,7 @@ import com.example.data.model.HeroCharacter
 import com.example.data.parser.MpqHeaderInfo
 import com.example.data.parser.MpqTool
 import com.example.data.parser.NativeSaveBridge
+import com.example.data.parser.NativePlayerPackItemCodec
 import com.example.data.parser.SaveConstants
 import java.io.File
 import java.util.UUID
@@ -17,7 +18,7 @@ class SaveFileService {
     /**
      * Uses the native PlayerPack writer on a staged copy of the imported MPQ.
      * The original bytes are backed up before the staged archive is modified.
-     * Only fields currently supported by NativeSaveBridge.patchField are patched.
+     * Only fields supported by NativeSaveBridge.patchField are patched, including native item arrays.
      */
     fun exportNativeSave(
         originalBytes: ByteArray,
@@ -41,7 +42,7 @@ class SaveFileService {
             var rawHero = NativeSaveBridge.readHero(
                 stagedArchive.absolutePath,
                 hero.isMultiplayer,
-                false,
+                hero.isSpawn,
                 isHellfire,
                 isHellfire
             )
@@ -63,15 +64,19 @@ class SaveFileService {
             patch("manaBase", hero.baseMana.toLong() * SaveConstants.HP_MANA_SCALE_FACTOR)
             patch("maxManaBase", hero.maxMana.toLong() * SaveConstants.HP_MANA_SCALE_FACTOR)
 
-            // Do not rewrite ItemPack arrays yet: the UI model cannot round-trip all
-            // native/mod-specific fields. Preserve original inventory bytes unchanged.
+            val nativeItems = NativePlayerPackItemCodec.encode(hero, isHellfire, hero.isSpawn)
+            patch("invBody", nativeItems.equipment)
+            patch("invList", nativeItems.inventory)
+            patch("invGrid", nativeItems.inventoryGrid)
+            patch("inventoryCount", nativeItems.inventoryCount.toLong())
+            patch("spdList", nativeItems.belt)
 
             NativeSaveBridge.writeHero(
                 stagedArchive.absolutePath,
                 rawHero,
                 hero.isMultiplayer,
-                false,
-                hero.gameMod == com.example.data.model.GameMod.HELLFIRE,
+                hero.isSpawn,
+                isHellfire,
             )
             check(stagedArchive.isFile && stagedArchive.length() > 0L) {
                 "Native MPQ writer produced an empty archive."

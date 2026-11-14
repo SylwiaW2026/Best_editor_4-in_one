@@ -81,6 +81,9 @@ static_assert(sizeof(devilution::ItemPack) == 19, "Unexpected ItemPack layout");
 static_assert(sizeof(devilution::PlayerPack) == 1266, "Unexpected PlayerPack layout");
 static_assert(offsetof(devilution::PlayerPack, InvBody) == 0x7C, "Unexpected InvBody offset");
 static_assert(offsetof(devilution::PlayerPack, InvList) == 0x101, "Unexpected InvList offset");
+static_assert(offsetof(devilution::PlayerPack, InvGrid) == 0x3F9, "Unexpected InvGrid offset");
+static_assert(offsetof(devilution::PlayerPack, _pNumInv) == 0x421, "Unexpected inventory count offset");
+static_assert(offsetof(devilution::PlayerPack, SpdList) == 0x422, "Unexpected belt offset");
 
 extern "C" JNIEXPORT jbyteArray JNICALL
 Java_com_example_data_parser_NativeSaveBridge_readHero(
@@ -190,6 +193,20 @@ Java_com_example_data_parser_NativeSaveBridge_patchField(
                     return nullptr;
                 }
                 std::memcpy(reinterpret_cast<uint8_t*>(bytes.get()) + offsetof(PlayerPack, InvList), valueBytes.get(), valueSize);
+            } else if (name == "invGrid") {
+                if (valueSize != InventoryGridCells * sizeof(int8_t)) {
+                    LogInfo("PatchField: invGrid size mismatch");
+                    ThrowJava(env, "java/lang/IllegalArgumentException", "invGrid size mismatch");
+                    return nullptr;
+                }
+                std::memcpy(reinterpret_cast<uint8_t*>(bytes.get()) + offsetof(PlayerPack, InvGrid), valueBytes.get(), valueSize);
+            } else if (name == "spdList") {
+                if (valueSize != MaxBeltItems * sizeof(ItemPack)) {
+                    LogInfo("PatchField: spdList size mismatch");
+                    ThrowJava(env, "java/lang/IllegalArgumentException", "spdList size mismatch");
+                    return nullptr;
+                }
+                std::memcpy(reinterpret_cast<uint8_t*>(bytes.get()) + offsetof(PlayerPack, SpdList), valueBytes.get(), valueSize);
             } else {
                 LogInfo("PatchField: Unsupported ByteArray field: " + name);
                 ThrowJava(env, "java/lang/IllegalArgumentException", "Unsupported ByteArray field: " + name);
@@ -218,6 +235,11 @@ Java_com_example_data_parser_NativeSaveBridge_patchField(
                 else if (name == "maxHpBase") Patch<int32_t>(bytes.get(), offsetof(PlayerPack, pMaxHPBase), longValue);
                 else if (name == "manaBase") Patch<int32_t>(bytes.get(), offsetof(PlayerPack, pManaBase), longValue);
                 else if (name == "maxManaBase") Patch<int32_t>(bytes.get(), offsetof(PlayerPack, pMaxManaBase), longValue);
+                else if (name == "inventoryCount") {
+                    if (longValue < 0 || longValue > InventoryGridCells)
+                        throw std::out_of_range("Inventory count exceeds supported PlayerPack capacity.");
+                    Patch<uint8_t>(bytes.get(), offsetof(PlayerPack, _pNumInv), longValue);
+                }
                 else {
                     LogInfo("PatchField: Unsupported Long field: " + name);
                     ThrowJava(env, "java/lang/IllegalArgumentException", "Unsupported Long field: " + name);

@@ -11,6 +11,7 @@ data class HeroCharacter(
 
     // Game Mod & Multiplayer
     val isMultiplayer: Boolean = false,
+    val isSpawn: Boolean = false,
     val multiplayerSlot: Int = 0, // 0 to 3 for single_0 / multi_0
     val gameMod: GameMod = GameMod.HELLFIRE,
     val unlockedNightmare: Boolean = true,
@@ -46,6 +47,8 @@ data class HeroCharacter(
 
     // Backpack inventory (up to 40 slots)
     val inventory: List<DiabloItem> = emptyList(),
+    val nativeInventoryGrid: List<Int> = List(40) { 0 },
+    val nativeItemState: NativeItemState? = null,
 
     // Belt / Speed Bar (8 slots)
     val belt: List<DiabloItem?> = List(8) { null },

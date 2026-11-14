@@ -325,15 +325,31 @@ class CharacterViewModel : ViewModel() {
 
     // Equipment & Inventory
     fun equipItem(slot: EquipSlot, item: DiabloItem) {
+        val current = _character.value
+        val equipped = current.equipment[slot]
+        if (equipped != null && equipped.id != item.id) {
+            showMessage("Unequip ${equipped.fullTitle} before replacing it.")
+            return
+        }
         _character.update { current ->
-            val newEquipment = current.equipment.toMutableMap()
+            val newEquipment = current.equipment.filterValues { it.id != item.id }.toMutableMap()
             newEquipment[slot] = item
-            current.copy(equipment = newEquipment)
+            current.copy(
+                equipment = newEquipment,
+                inventory = current.inventory.filterNot { it.id == item.id }
+            )
         }
         showMessage("Equipped ${item.fullTitle} in ${slot.displayName}")
     }
 
     fun unequipItem(slot: EquipSlot) {
+        val item = _character.value.equipment[slot]
+        if (item?.nativePack != null && item.nativeInventoryIndex == null &&
+            (item.gridWidth <= 0 || item.gridHeight <= 0)
+        ) {
+            showMessage("Cannot safely move ${item.fullTitle}: its native inventory dimensions are unknown.")
+            return
+        }
         _character.update { current ->
             val item = current.equipment[slot]
             if (item != null) {
@@ -434,9 +450,10 @@ class CharacterViewModel : ViewModel() {
                 importedOriginalSave = bytes.copyOf()
                 importedRawHero = rawHero.copyOf()
                 _hasImportedNativeSave.value = true
-                val parsedHero = parseNativePlayerPack(rawHero).copy(
+                val parsedHero = parseNativePlayerPack(rawHero, isHellfire, isSpawn).copy(
                     isMultiplayer = isMultiplayer,
-                    gameMod = if (isHellfire) GameMod.HELLFIRE else _character.value.gameMod
+                    isSpawn = isSpawn,
+                    gameMod = if (isHellfire) GameMod.HELLFIRE else GameMod.VANILLA_DIABLO
                 ) 
                 _character.value = parsedHero
                 showMessage("Successfully imported $filename")
@@ -467,7 +484,11 @@ class CharacterViewModel : ViewModel() {
             null
         }
     }
-    internal fun parseNativePlayerPack(raw: ByteArray): HeroCharacter {
+    internal fun parseNativePlayerPack(
+        raw: ByteArray,
+        isHellfire: Boolean = false,
+        isSpawn: Boolean = false
+    ): HeroCharacter {
         val buffer = ByteBuffer.wrap(raw).order(ByteOrder.LITTLE_ENDIAN)
         
         // Keep in sync with sizeof(PlayerPack) in native pack.h.
@@ -515,32 +536,7 @@ class CharacterViewModel : ViewModel() {
         val currentMana = (rawManaBase / 64).coerceAtLeast(0)
         val maxMana = (rawMaxMana / 64).coerceAtLeast(0)
 
-        // Helper to parse ItemPack from buffer
-        fun parseItem(offset: Int): DiabloItem? {
-            if (offset + 19 > raw.size) return null
-            val iSeed = buffer.getInt(offset)
-            if (iSeed == 0) return null // Empty slot
-            val idx = buffer.getShort(offset + 6).toInt() and 0xFFFF
-
-            return ItemArmory.FULL_ITEM_LIBRARY.getOrNull(idx)
-        }
-        
-        val equipment = mutableMapOf<EquipSlot, DiabloItem>()
-        val slots = arrayOf(
-            EquipSlot.HEAD, EquipSlot.NECK, EquipSlot.TORSO, 
-            EquipSlot.LEFT_HAND, EquipSlot.RIGHT_HAND, 
-            EquipSlot.LEFT_RING, EquipSlot.RIGHT_RING
-        )
-        // pack.h: sizeof(ItemPack)=19, InvBody offset=0x7C.
-        for (i in slots.indices) {
-            parseItem(0x7C + i * 19)?.let { equipment[slots[i]] = it }
-        }
-
-        val inventory = mutableListOf<DiabloItem>()
-        // pack.h: InvList offset=0x101 (0x7C + 7 * 19).
-        for (i in 0 until 40) {
-            parseItem(0x101 + i * 19)?.let { inventory.add(it) }
-        }
+        val nativeItems = NativePlayerPackItemCodec.decode(raw, isHellfire, isSpawn)
 
         return _character.value.copy(
             name = if (parsedName.isBlank()) "Bezimienny" else parsedName,
@@ -563,8 +559,12 @@ class CharacterViewModel : ViewModel() {
             mana = currentMana,
             maxMana = maxMana,
             baseMana = maxMana,
-            equipment = equipment,
-            inventory = inventory
+            equipment = nativeItems.equipment,
+            inventory = nativeItems.inventory,
+            belt = nativeItems.belt,
+            nativeInventoryGrid = nativeItems.inventoryGrid,
+            nativeItemState = nativeItems.state,
+            isSpawn = isSpawn
         )
     }
 

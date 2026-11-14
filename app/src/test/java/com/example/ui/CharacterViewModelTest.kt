@@ -2,7 +2,7 @@ package com.example.ui
 
 import com.example.data.model.GameMod
 import com.example.data.model.EquipSlot
-import com.example.data.model.ItemArmory
+import com.example.data.model.NativeItemPack
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.nio.ByteBuffer
@@ -35,18 +35,36 @@ class CharacterViewModelTest {
     }
 
     @Test
-    fun nativeSaveSkipsUnknownItemsAndContinuesReadingFollowingItems() {
+    fun nativeSaveUsesNativeEquipmentOrderAndKeepsUnknownItems() {
         val raw = ByteBuffer.allocate(1266).order(ByteOrder.LITTLE_ENDIAN)
-        val unknownItemOffset = 0x7C
-        val knownItemOffset = unknownItemOffset + 19
-        raw.putInt(unknownItemOffset, 1)
-        raw.putShort(unknownItemOffset + 6, ItemArmory.FULL_ITEM_LIBRARY.size.toShort())
-        raw.putInt(knownItemOffset, 1)
-        raw.putShort(knownItemOffset + 6, 0)
+        val unknownItem = NativeItemPack(
+            seed = 0x12345678,
+            createInfo = 0xABCD,
+            index = 0x4321,
+            idFlags = 1,
+            durability = 12,
+            maxDurability = 40,
+            charges = 0,
+            maxCharges = 0,
+            value = 0,
+            buff = 0x1234
+        )
+        for (index in 0 until 7) {
+            NativeItemPack.EMPTY.toByteArray().copyInto(raw.array(), 0x7C + index * NativeItemPack.SIZE)
+        }
+        for (index in 0 until 40) {
+            NativeItemPack.EMPTY.toByteArray().copyInto(raw.array(), 0x101 + index * NativeItemPack.SIZE)
+        }
+        for (index in 0 until 8) {
+            NativeItemPack.EMPTY.toByteArray().copyInto(raw.array(), 0x422 + index * NativeItemPack.SIZE)
+        }
+        unknownItem.toByteArray().copyInto(raw.array(), 0x7C)
+        raw.put(0x421, 0.toByte())
 
         val character = CharacterViewModel().parseNativePlayerPack(raw.array())
 
         assertEquals(1, character.equipment.size)
-        assertEquals(ItemArmory.FULL_ITEM_LIBRARY[0], character.equipment[EquipSlot.NECK])
+        assertEquals(unknownItem, character.equipment[EquipSlot.HEAD]?.nativePack)
+        assertEquals("Native item #17185", character.equipment[EquipSlot.HEAD]?.name)
     }
 }

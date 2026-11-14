@@ -54,7 +54,9 @@ data class DiabloItem(
     val recommendedClasses: List<HeroClass> = emptyList(),
     val defaultSlot: EquipSlot? = null,
     val iSeed: Int = Random.nextInt(1, Int.MAX_VALUE),
-    val itemIndex: Int = 0
+    val itemIndex: Int? = null,
+    val nativePack: NativeItemPack? = null,
+    val nativeInventoryIndex: Int? = null
 ) {
     val fullTitle: String
         get() = when (quality) {

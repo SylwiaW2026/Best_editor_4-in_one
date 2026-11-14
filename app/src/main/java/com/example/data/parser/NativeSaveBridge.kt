@@ -6,6 +6,7 @@ package com.example.data.parser
  * readHero returns the decrypted, uncompressed PlayerPack bytes. Keep those bytes
  * as the editing session's source of truth. patchField returns a copy with one
  * supported field changed, preserving every other byte including unknown/reserved data.
+ * Item byte-array fields are the packed equipment, inventory, grid, and belt records.
  */
 object NativeSaveBridge {
     init {

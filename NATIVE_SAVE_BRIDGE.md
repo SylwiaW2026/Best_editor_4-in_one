@@ -15,7 +15,9 @@ It calls reusable APIs, not the CLI `main()`:
 
 `readHero` returns decoded bytes of packed `PlayerPack` as a `ByteArray`. This is the editing session's raw baseline. `patchField` copies it and changes only a supported field's bytes; all remaining bytes, including reserved and unknown data, are retained. The UI should keep this raw snapshot and patch it rather than rebuild a struct from defaults.
 
-Supported field names: `level`, `class`, `baseStrength`, `baseMagic`, `baseDexterity`, `baseVitality`, `statPoints`, `experience`, `gold`, `hpBase`, `maxHpBase`, `manaBase`, `maxManaBase`.
+Supported `patchField` names: `level`, `class`, `baseStrength`, `baseMagic`, `baseDexterity`, `baseVitality`, `statPoints`, `experience`, `gold`, `hpBase`, `maxHpBase`, `manaBase`, `maxManaBase`, `invBody`, `invList`, `invGrid`, `inventoryCount`, and `spdList`.
+
+The item codec retains each 19-byte native `ItemPack` verbatim, including unknown item IDs and fields the editor does not understand. It reads and writes equipment, inventory records, the inventory grid/count, and belt records. Unchanged item data is byte-preserved; inventory removal/reordering remaps grid references. Catalog entries without a verified native item record are rejected during native save export rather than being written as guessed or invalid items. Native item IDs are shown as `Native item #<id>` because this repository does not include the canonical game item-name and dimension tables; adding or moving an item without verified dimensions is likewise rejected.
 
 ## Build and test notes
 

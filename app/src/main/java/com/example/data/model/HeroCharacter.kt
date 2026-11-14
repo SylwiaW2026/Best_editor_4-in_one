@@ -173,9 +173,9 @@ data class HeroCharacter(
                 spellLevels = allSpellsMax,
                 equipment = godlyItems,
                 inventory = listOfNotNull(
-                    catalogItem("King's"),
-                    catalogItem("Naj's Puzzler"),
-                    catalogItem("Full Rejuvenation")
+                    catalogItem("King's") ?: DiabloItem(name = "King's", baseType = "Unknown", defaultSlot = EquipSlot.HEAD),
+                    catalogItem("Naj's Puzzler") ?: DiabloItem(name = "Naj's Puzzler", baseType = "Unknown", defaultSlot = EquipSlot.LEFT_RING),
+                    catalogItem("Full Rejuvenation") ?: DiabloItem(name = "Full Rejuvenation", baseType = "Unknown", defaultSlot = EquipSlot.NECK)
                 ),
                 questsCompleted = 16
             )

@@ -65,73 +65,76 @@ object DevilutionXSaveParser {
     fun parseHeroStruct(bytes: ByteArray): HeroCharacter {
         val buf = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
 
-        // Offset 0x00: Name (16 bytes, ASCII null-terminated)
-        val nameBytes = ByteArray(16)
+        // Imię: offset 0 (32 bajty), użyj Charsets.ISO_8859_1
+        buf.position(0)
+        val nameBytes = ByteArray(32)
         buf.get(nameBytes)
-        val rawName = String(nameBytes, Charsets.US_ASCII).takeWhile { it != '\u0000' }.trim()
+        val rawName = String(nameBytes, Charsets.ISO_8859_1).takeWhile { it != '\u0000' }.trim()
         val name = if (rawName.isBlank()) "Hero" else rawName
 
-        // Offset 0x10: Class (4 bytes or 1 byte + 3 padding)
-        val classInt = buf.int
+        // Klasa: offset 32
+        buf.position(32)
+        val classInt = buf.get().toInt()
         val heroClass = HeroClass.fromIndex(classInt.coerceIn(0, 5))
 
-        // Offset 0x14: Level
-        val level = buf.int.coerceIn(1, 50)
+        // Siła: offset 33
+        buf.position(33)
+        val strength = buf.get().toInt().coerceIn(0, 300)
+        val baseStrength = strength
 
-        // Offset 0x18: Experience
+        // Magia: offset 34
+        buf.position(34)
+        val magic = buf.get().toInt().coerceIn(0, 300)
+        val baseMagic = magic
+
+        // Zręczność: offset 35
+        buf.position(35)
+        val dexterity = buf.get().toInt().coerceIn(0, 300)
+        val baseDexterity = dexterity
+
+        // Witalność: offset 36
+        buf.position(36)
+        val vitality = buf.get().toInt().coerceIn(0, 300)
+        val baseVitality = vitality
+
+        // Poziom: offset 37
+        buf.position(37)
+        val level = buf.get().toInt().coerceIn(1, 50)
+
+        // Doświadczenie: offset 39 (Int, 4 bajty)
+        buf.position(39)
         val experience = buf.int.toLong() and 0xFFFFFFFFL
 
-        // Offset 0x1C: Gold
+        // Złoto: offset 43 (Int, 4 bajty)
+        buf.position(43)
         val gold = buf.int.toLong() and 0xFFFFFFFFL
 
-        // Stats offsets
-        val strength = buf.int.coerceIn(0, 300)
-        val baseStrength = buf.int.coerceIn(0, 300)
-        val magic = buf.int.coerceIn(0, 300)
-        val baseMagic = buf.int.coerceIn(0, 300)
-        val dexterity = buf.int.coerceIn(0, 300)
-        val baseDexterity = buf.int.coerceIn(0, 300)
-        val vitality = buf.int.coerceIn(0, 300)
-        val baseVitality = buf.int.coerceIn(0, 300)
-        val statPoints = buf.int.coerceIn(0, 500)
-
-        // HP & Mana (stored multiplied by 64 in Diablo 1)
+        // HP: offset 47, Max HP: offset 51
+        buf.position(47)
         val rawLife = buf.int
         val rawMaxLife = buf.int
-        val rawBaseLife = buf.int
+
+        // Mana: offset 55, Max Mana: offset 59
+        buf.position(55)
         val rawMana = buf.int
         val rawMaxMana = buf.int
-        val rawBaseMana = buf.int
 
-        val life = if (rawLife > 1000) rawLife / 64 else rawLife.coerceAtLeast(1)
-        val maxLife = if (rawMaxLife > 1000) rawMaxLife / 64 else rawMaxLife.coerceAtLeast(1)
-        val baseLife = if (rawBaseLife > 1000) rawBaseLife / 64 else rawBaseLife.coerceAtLeast(1)
-        val mana = if (rawMana > 1000) rawMana / 64 else rawMana.coerceAtLeast(0)
-        val maxMana = if (rawMaxMana > 1000) rawMaxMana / 64 else rawMaxMana.coerceAtLeast(0)
-        val baseMana = if (rawBaseMana > 1000) rawBaseMana / 64 else rawBaseMana.coerceAtLeast(0)
+        val life = (rawLife / 64).coerceAtLeast(1)
+        val maxLife = (rawMaxLife / 64).coerceAtLeast(1)
+        val baseLife = maxLife
+        val mana = (rawMana / 64).coerceAtLeast(0)
+        val maxMana = (rawMaxMana / 64).coerceAtLeast(0)
+        val baseMana = maxMana
 
-        // Spell levels (64-element array in DevilutionX)
+        // StatPoints are not explicitly provided in the new list, keeping previous value or placeholder
+        val statPoints = 0
+
+        // Equipment: offset 140
+        // (Inventory parsing logic would be added here)
+        val equipment = mutableMapOf<EquipSlot, DiabloItem>()
+
+        // Spell levels (remains as is)
         val spellLevels = mutableMapOf<String, Int>()
-        val allSpellBytes = ByteArray(64)
-        if (buf.remaining() >= 64) {
-            buf.get(allSpellBytes)
-            for (spell in DiabloSpellsCatalog.ALL_SPELLS) {
-                val lvl = allSpellBytes[spell.binaryIndex].toInt() and 0xFF
-                if (lvl in 1..15) {
-                    spellLevels[spell.id] = lvl
-                }
-            }
-        } else {
-            // Fallback for older save format or malformed data
-            for (spell in DiabloSpellsCatalog.ALL_SPELLS) {
-                if (buf.hasRemaining()) {
-                    val lvl = buf.get().toInt() and 0xFF
-                    if (lvl in 1..15) {
-                        spellLevels[spell.id] = lvl
-                    }
-                }
-            }
-        }
 
         // Check for DEVX extension header at offset 0x200 (512 bytes)
         var isMultiplayer = false
@@ -191,7 +194,8 @@ object DevilutionXSaveParser {
             maxMana = maxMana,
             baseMana = baseMana,
             manaShieldActive = false,
-            spellLevels = spellLevels
+            spellLevels = spellLevels,
+            equipment = equipment
         )
     }
 

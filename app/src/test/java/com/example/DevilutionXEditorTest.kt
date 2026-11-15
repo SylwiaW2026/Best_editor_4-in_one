@@ -1,7 +1,7 @@
 package com.example
 
 import com.example.data.model.*
-import com.example.data.parser.DevilutionXSaveParser
+import com.example.data.parser.SaveUtils
 import com.example.data.parser.MpqTool
 import com.example.data.parser.NoctonicJsonParser
 import org.junit.Assert.*
@@ -56,11 +56,11 @@ class DevilutionXEditorTest {
     @Test
     fun testDevilutionXSaveStructSerialization() {
         val warrior = HeroCharacter.createGodly(HeroClass.WARRIOR, "Aidan")
-        val bytes = DevilutionXSaveParser.serializeToHeroStruct(warrior)
+        val bytes = SaveUtils.serializeToHeroStruct(warrior)
 
         assertEquals(1280, bytes.size)
 
-        val parsed = DevilutionXSaveParser.parseHeroStruct(bytes)
+        val parsed = SaveUtils.parseHeroStruct(bytes)
         assertEquals("Aidan", parsed.name)
         assertEquals(HeroClass.WARRIOR, parsed.heroClass)
         assertEquals(50, parsed.level)
@@ -74,19 +74,19 @@ class DevilutionXEditorTest {
             multiplayerSlot = 2,
             gameMod = GameMod.MIDDLE_EARTH
         )
-        val bytes = DevilutionXSaveParser.serializeToHeroStruct(mpHero)
-        val parsed = DevilutionXSaveParser.parseHeroStruct(bytes)
+        val bytes = SaveUtils.serializeToHeroStruct(mpHero)
+        val parsed = SaveUtils.parseHeroStruct(bytes)
 
         assertTrue(parsed.isMultiplayer)
         assertEquals(2, parsed.multiplayerSlot)
         assertEquals(GameMod.MIDDLE_EARTH, parsed.gameMod)
 
         // Test filename fallback detection
-        val rawBytes = DevilutionXSaveParser.serializeToHeroStruct(HeroCharacter(name = "TestSP"))
-        val parsedFromFilename = DevilutionXSaveParser.parseSaveBytes(rawBytes, "multi_1.sv")
+        val rawBytes = SaveUtils.serializeToHeroStruct(HeroCharacter(name = "TestSP"))
+        val parsedFromFilename = SaveUtils.parseSaveBytes(rawBytes, "multi_1.sv")
         assertTrue(parsedFromFilename.isMultiplayer)
 
-        val parsedHellfire = DevilutionXSaveParser.parseSaveBytes(rawBytes, "multi_0.hsv")
+        val parsedHellfire = SaveUtils.parseSaveBytes(rawBytes, "multi_0.hsv")
         assertTrue(parsedHellfire.isMultiplayer)
         assertEquals(GameMod.HELLFIRE, parsedHellfire.gameMod)
     }
@@ -94,7 +94,7 @@ class DevilutionXEditorTest {
     @Test
     fun testMpqHeaderGenerationAndAnalysis() {
         val hero = HeroCharacter.createGodly(HeroClass.ROGUE, "Moreina")
-        val mpqArchive = DevilutionXSaveParser.createSaveFileMpq(hero)
+        val mpqArchive = SaveUtils.createSaveFileMpq(hero)
 
         assertTrue(mpqArchive.size > 32)
         val info = MpqTool.analyzeMpqHeader(mpqArchive)

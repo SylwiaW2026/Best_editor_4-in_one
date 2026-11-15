@@ -356,7 +356,7 @@ class CharacterViewModel : ViewModel() {
             _mpqInfo.value = mpq
             _hexDump.value = MpqTool.formatHexDump(bytes, 24)
 
-            val parsedHero = DevilutionXSaveParser.parseSaveBytes(bytes, filename)
+            val parsedHero = SaveUtils.parseNativePlayerPack(bytes)
             _character.value = parsedHero
             showMessage("Imported $filename (${parsedHero.name}, Lv ${parsedHero.level} ${parsedHero.heroClass.displayName}${if (parsedHero.isMultiplayer) " [Multiplayer]" else ""})")
             true
@@ -367,7 +367,7 @@ class CharacterViewModel : ViewModel() {
     }
 
     fun exportSaveMpqBytes(): ByteArray {
-        return DevilutionXSaveParser.createSaveFileMpq(_character.value)
+        return SaveUtils.createSaveFileMpq(_character.value)
     }
 
     fun inspectBytes(bytes: ByteArray) {

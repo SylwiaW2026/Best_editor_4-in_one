@@ -1,7 +1,7 @@
 package com.example.data.service
 
 import com.example.data.model.HeroCharacter
-import com.example.data.parser.DevilutionXSaveParser
+import com.example.data.parser.SaveUtils
 import com.example.data.parser.MpqHeaderInfo
 import com.example.data.parser.MpqTool
 
@@ -15,14 +15,14 @@ class SaveFileService {
      * Parses binary save data into a HeroCharacter object.
      */
     fun parseSave(bytes: ByteArray, filename: String = ""): HeroCharacter {
-        return DevilutionXSaveParser.parseSaveBytes(bytes, filename)
+        return SaveUtils.parseSaveBytes(bytes, filename)
     }
 
     /**
      * Serializes a HeroCharacter back into a binary MPQ save file.
      */
     fun exportSave(hero: HeroCharacter): ByteArray {
-        return DevilutionXSaveParser.createSaveFileMpq(hero)
+        return SaveUtils.createSaveFileMpq(hero)
     }
 
     /**

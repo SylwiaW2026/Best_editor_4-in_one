@@ -4,59 +4,12 @@ import com.example.data.model.*
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
-object DevilutionXSaveParser {
+object SaveUtils {
 
-    /**
-     * Attempts to parse either a raw hero byte array or an MPQ archive containing hero data.
-     */
-    fun parseSaveBytes(bytes: ByteArray, filename: String = ""): HeroCharacter {
-        if (bytes.size < 64) {
-            throw IllegalArgumentException("File size is too small for a DevilutionX save file (${bytes.size} bytes).")
-        }
-
-        val mpqInfo = MpqTool.analyzeMpqHeader(bytes)
-        val heroBytes = if (mpqInfo.isValidMpq) {
-            extractHeroFromMpq(bytes, mpqInfo)
-        } else {
-            bytes
-        }
-
-        val hero = parseHeroStruct(heroBytes)
-        val isMpFromFilename = filename.contains("multi", ignoreCase = true) || filename.contains("d1m", ignoreCase = true)
-        val isHfFromFilename = filename.endsWith(".hsv", ignoreCase = true)
-
-        return hero.copy(
-            isMultiplayer = hero.isMultiplayer || isMpFromFilename,
-            gameMod = if (isHfFromFilename) GameMod.HELLFIRE else hero.gameMod
-        )
-    }
-
-    private fun extractHeroFromMpq(bytes: ByteArray, info: MpqHeaderInfo): ByteArray {
-        // Look for embedded hero block or string patterns in uncompressed/decrypted blocks
-        // In DevilutionX unpacked or standard test archives, hero is commonly situated after header
-        val headerSize = info.headerSize.coerceAtLeast(32)
-        val heroCandidateOffset = headerSize
-
-        if (bytes.size > heroCandidateOffset + 128) {
-            val candidateSlice = bytes.copyOfRange(heroCandidateOffset, bytes.size)
-            // Verify if first 16 bytes contain valid printable characters for hero name
-            val firstByte = candidateSlice[0].toInt().toChar()
-            if (firstByte.isLetterOrDigit()) {
-                return candidateSlice
-            }
-        }
-
-        // Scan for potential hero data signature if offset differs
-        for (offset in 32 until minOf(bytes.size - 64, 1024) step 4) {
-            val c = bytes[offset].toInt().toChar()
-            val cls = bytes.getOrNull(offset + 16)?.toInt() ?: -1
-            if (c.isLetter() && cls in 0..5) {
-                return bytes.copyOfRange(offset, bytes.size)
-            }
-        }
-
-        // Fallback: use bytes directly
-        return bytes
+    fun parseNativePlayerPack(bytes: ByteArray): HeroCharacter {
+        // Implementation from DevilutionXSaveParser.parseHeroStruct
+        // (will use the more complete version)
+        return parseHeroStruct(bytes)
     }
 
     /**
@@ -197,6 +150,59 @@ object DevilutionXSaveParser {
             spellLevels = spellLevels,
             equipment = equipment
         )
+    }
+
+    /**
+     * Attempts to parse either a raw hero byte array or an MPQ archive containing hero data.
+     */
+    fun parseSaveBytes(bytes: ByteArray, filename: String = ""): HeroCharacter {
+        if (bytes.size < 64) {
+            throw IllegalArgumentException("File size is too small for a DevilutionX save file (${bytes.size} bytes).")
+        }
+
+        val mpqInfo = MpqTool.analyzeMpqHeader(bytes)
+        val heroBytes = if (mpqInfo.isValidMpq) {
+            extractHeroFromMpq(bytes, mpqInfo)
+        } else {
+            bytes
+        }
+
+        val hero = parseHeroStruct(heroBytes)
+        val isMpFromFilename = filename.contains("multi", ignoreCase = true) || filename.contains("d1m", ignoreCase = true)
+        val isHfFromFilename = filename.endsWith(".hsv", ignoreCase = true)
+
+        return hero.copy(
+            isMultiplayer = hero.isMultiplayer || isMpFromFilename,
+            gameMod = if (isHfFromFilename) GameMod.HELLFIRE else hero.gameMod
+        )
+    }
+
+    private fun extractHeroFromMpq(bytes: ByteArray, info: MpqHeaderInfo): ByteArray {
+        // Look for embedded hero block or string patterns in uncompressed/decrypted blocks
+        // In DevilutionX unpacked or standard test archives, hero is commonly situated after header
+        val headerSize = info.headerSize.coerceAtLeast(32)
+        val heroCandidateOffset = headerSize
+
+        if (bytes.size > heroCandidateOffset + 128) {
+            val candidateSlice = bytes.copyOfRange(heroCandidateOffset, bytes.size)
+            // Verify if first 16 bytes contain valid printable characters for hero name
+            val firstByte = candidateSlice[0].toInt().toChar()
+            if (firstByte.isLetterOrDigit()) {
+                return candidateSlice
+            }
+        }
+
+        // Scan for potential hero data signature if offset differs
+        for (offset in 32 until minOf(bytes.size - 64, 1024) step 4) {
+            val c = bytes[offset].toInt().toChar()
+            val cls = bytes.getOrNull(offset + 16)?.toInt() ?: -1
+            if (c.isLetter() && cls in 0..5) {
+                return bytes.copyOfRange(offset, bytes.size)
+            }
+        }
+
+        // Fallback: use bytes directly
+        return bytes
     }
 
     /**
